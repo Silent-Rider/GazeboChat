@@ -13,11 +13,11 @@ import java.time.format.DateTimeFormatter;
 public class ServerGUI {
 
     private static final Logger logger = Server.logger;
-    private static int port;
     private static JFrame menu = new JFrame();
     private static JFrame program = new JFrame();
-    private static final DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss");
-    private static volatile LocalTime startTime;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static LocalTime startTime;
+    private static final String USERS_COUNT = "Пользователей: %d";
 
     private static final int X_INDENT = 200;
     private static final int Y_INDENT = 100;
@@ -27,10 +27,6 @@ public class ServerGUI {
     static{
         initFrame(menu);
         initFrame(program);
-    }
-
-    public static void main(String[] args) {
-        start();
     }
 
     private static void initFrame(JFrame frame){
@@ -86,25 +82,39 @@ public class ServerGUI {
         title.setFont(new Font("Segoe Print", Font.BOLD, 25));
         title.setBounds(140, 45, 400, 35);
 
-        JLabel time = new JLabel("");
+        JLabel time = new JLabel(FORMATTER.format(startTime));
         time.setFont(new Font("Times New Roman", Font.BOLD, 25));
         time.setBounds(200, 90, 200, 30);
-        time.setBackground(new Color(179,179,217));
-        Timer timer = timer(time);
 
+        JLabel usersCount = new JLabel(String.format(USERS_COUNT, 0));
+        usersCount.setFont(new Font("Times New Roman", Font.BOLD, 25));
+        usersCount.setBounds(150, 130, 200, 30);
+
+        Timer timer = timer(time, usersCount);
+        JButton stop = getStopButton(timer);
+
+        fillContainer(container, title, time, usersCount, stop);
+        timer.start();
+    }
+
+    private static JButton getStopButton(Timer timer) {
         JButton stop = new JButton("Остановить сервер");
         stop.setFont(new Font("Tahoma", Font.BOLD, 25));
         stop.setBackground(new Color(255,83,83));
-        stop.setBounds(85, 170, 330, 50);
+        stop.setBounds(85, 185, 330, 50);
         stop.addActionListener(e -> {
-            Server.isRunning = false;
+            try {
+                Server.close();
+            } catch (IOException exc){
+            }
             startTime = LocalTime.MIN;
             timer.stop();
-            start();
+            Server.connectionMap.clear();
+            synchronized (Server.restartLock){
+                Server.restartLock.notify();
+            }
         });
-
-        fillContainer(container, title, time, stop);
-        timer.start();
+        return stop;
     }
 
     private static JButton getLaunchButton(JTextField portText) {
@@ -118,15 +128,18 @@ public class ServerGUI {
                         "Некорректный порт", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-            port = Integer.parseInt(portText.getText());
+            int port = Integer.parseInt(portText.getText());
             startTime = LocalTime.MIN;
             mainFrame();
-            Server.launch(port);
+            synchronized (Server.port){
+                Server.port.set(port);
+                Server.port.notify();
+            }
         });
         return launch;
     }
 
-    static void mainFrame(){
+    private static void mainFrame(){
         menu.setVisible(false);
         menu.dispose();
         menu = new JFrame();
@@ -142,7 +155,7 @@ public class ServerGUI {
             container.add(component);
     }
 
-    private static void start(){
+    static void start(){
         program.setVisible(false);
         program.dispose();
         program = new JFrame();
@@ -152,11 +165,12 @@ public class ServerGUI {
         menu.setVisible(true);
     }
 
-    private static Timer timer(JLabel field) {
+    private static Timer timer(JLabel time, JLabel usersCount) {
        return new Timer(1000, e -> {
             LocalTime newTime = startTime.plusSeconds(1);
-            field.setText(format.format(newTime));
+            time.setText(FORMATTER.format(newTime));
             startTime = newTime;
+            usersCount.setText(String.format(USERS_COUNT, Server.connectionMap.size()));
         });
     }
 }

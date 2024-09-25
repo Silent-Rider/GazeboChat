@@ -9,8 +9,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 public class ClientGUI {
-    private static String IP;
-    private static int port;
 
     private static final JTextField textField = new JTextField();
     private static final JTextArea messages = new JTextArea();
@@ -26,10 +24,6 @@ public class ClientGUI {
     static{
         initFrame(menu);
         initFrame(program);
-    }
-
-    public static void main(String[] args) {
-        launch();
     }
 
     private static void initFrame(JFrame frame){
@@ -108,13 +102,7 @@ public class ClientGUI {
         usersTitle.setFont(new Font("Segoe Print", Font.BOLD, 25));
         usersTitle.setBounds(1270, 5, 250, 30);
 
-        JButton reset = new JButton("Главное меню");
-        reset.setFont(new Font("Segoe Print", Font.BOLD, 25));
-        reset.setBackground(new Color(255,83,83));
-        reset.setBounds(1270, 760, 220, 55);
-        reset.addActionListener(e -> {
-            launch();
-        });
+        JButton reset = getResetButton();
 
         JButton send = new JButton("Отправить");
         send.setFont(new Font("Segoe Print", Font.BOLD, 21));
@@ -128,6 +116,26 @@ public class ClientGUI {
         fillContainer(container, textField, messagesScroll, users, usersTitle, reset, send);
     }
 
+    private static JButton getResetButton() {
+        JButton reset = new JButton("Главное меню");
+        reset.setFont(new Font("Segoe Print", Font.BOLD, 25));
+        reset.setBackground(new Color(255,83,83));
+        reset.setBounds(1270, 760, 220, 55);
+        reset.addActionListener(e -> {
+            try {
+                if(Client.getConnection() != null)
+                    Client.getConnection().close();
+            } catch (IOException exc){
+            }
+            Client.allUserNames.remove(Client.getUserName());
+            Client.IP.setLength(0);
+            synchronized (Client.restartLock){
+                Client.restartLock.notify();
+            }
+        });
+        return reset;
+    }
+
     private static JButton getConnectButton(JTextField IPText, JTextField portText) {
         JButton connect = new JButton("Подключиться");
         connect.setBounds(400, 500, 300, 50);
@@ -139,14 +147,18 @@ public class ClientGUI {
                         "Некорректный IP-адрес", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-            IP = IPText.getText();
+            String IP = IPText.getText();
             if(!Connection.checkServerPort(portText.getText())) {
                 JOptionPane.showMessageDialog(null, "Введён некорректный порт сервера",
                         "Некорректный порт", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-            port = Integer.parseInt(portText.getText());
-            Client.launch(IP, port);
+            int port = Integer.parseInt(portText.getText());
+            synchronized (Client.port){
+                Client.port.set(port);
+                Client.IP.append(IP);
+                Client.port.notify();
+            }
         });
         return connect;
     }
@@ -159,7 +171,7 @@ public class ClientGUI {
                     JOptionPane.INFORMATION_MESSAGE);
             name = getUserName();
         }
-        else if(Client.getAllUserNames().contains(name)) {
+        else if(Client.allUserNames.contains(name)) {
             JOptionPane.showMessageDialog(null, "Данное имя уже занято", "Занятое имя",
                     JOptionPane.INFORMATION_MESSAGE);
             name = getUserName();
@@ -183,7 +195,7 @@ public class ClientGUI {
 
     static void refreshUsers() {
         StringBuilder sb = new StringBuilder();
-        for (String userName : Client.getAllUserNames())
+        for (String userName : Client.allUserNames)
             sb.append(userName).append("\n");
         users.setText(sb.toString());
     }
@@ -204,7 +216,7 @@ public class ClientGUI {
         program.setVisible(true);
     }
 
-    private static void launch(){
+    static void launch(){
         program.setVisible(false);
         program.dispose();
         program = new JFrame();

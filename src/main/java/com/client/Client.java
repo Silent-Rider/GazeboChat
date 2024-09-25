@@ -6,17 +6,41 @@ import com.utility.MessageType;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class Client{
     private volatile static Connection connection;
-    private static final Set<String> allUserNames = new HashSet<>();
     private static String newMessage;
+    private static String userName;
+    static final StringBuffer IP = new StringBuffer();
+    static final AtomicInteger port = new AtomicInteger();
+    static final Set<String> allUserNames = new CopyOnWriteArraySet<>();
+    static final Object restartLock = new Object();
 
-    static void launch(String IP, int port) {
-        new SocketThread(IP, port).start();
+    public static void main(String[] args) {
+        while(true)
+            synchronized (restartLock){
+                launch();
+                try{
+                    restartLock.wait();
+                } catch (InterruptedException e){
+//                    logger.error("Unknown interrupted exception before restarting a client");
+                }
+            }
+    }
+
+    private static void launch(){
+        new Thread(ClientGUI::launch).start();
+        synchronized (port){
+            try {
+                port.wait();
+            } catch (InterruptedException e){
+//                logger.error("Unknown interrupted exception before launching a client");
+            }
+        }
+        new SocketThread(IP.toString(), port.get()).start();
     }
 
     static void sendTextMessage(String text){
@@ -27,12 +51,16 @@ class Client{
         }
     }
 
-    static Set<String> getAllUserNames() {
-        return Collections.unmodifiableSet(allUserNames);
-    }
-
     static String getNewMessage() {
         return newMessage;
+    }
+
+    static Connection getConnection() {
+        return connection;
+    }
+
+    static String getUserName() {
+        return userName;
     }
 
     static void setNewMessage(String newMessage) {
@@ -45,10 +73,6 @@ class Client{
 
     static void deleteUser(String userName){
         allUserNames.remove(userName);
-    }
-
-    public static Connection getConnection() {
-        return connection;
     }
 
     static class SocketThread extends Thread{
@@ -67,8 +91,8 @@ class Client{
                 connection = new Connection(socket);
                 clientHandshake();
                 clientMainLoop();
-
             } catch (IOException | ClassNotFoundException e) {
+                if(connection != null && connection.isClosedIntentionally()) return;
                 notifyConnectionStatusChanged(false);
             }
         }
@@ -96,8 +120,8 @@ class Client{
             while(true){
                 Message message = connection.receive();
                 switch (message.getType()){
-                    case NAME_REQUEST: String name = ClientGUI.getUserName();
-                    connection.send(new Message(MessageType.USER_NAME, name));
+                    case NAME_REQUEST: userName = ClientGUI.getUserName();
+                    connection.send(new Message(MessageType.USER_NAME, userName));
                     continue;
                     case NAME_ACCEPTED:
                         notifyConnectionStatusChanged(true);

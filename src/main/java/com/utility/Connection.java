@@ -8,6 +8,7 @@ public class Connection implements Closeable {
     private final Socket socket;
     private final ObjectOutputStream out;
     private final ObjectInputStream in;
+    private volatile boolean isClosedIntentionally = false;
 
     public Connection(Socket socket) throws IOException {
         this.socket = socket;
@@ -31,6 +32,10 @@ public class Connection implements Closeable {
         return socket.getRemoteSocketAddress();
     }
 
+    public boolean isClosedIntentionally(){
+        return isClosedIntentionally;
+    }
+
     public static boolean checkServerAddress(String IP) {
         return IP.matches("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|localhost");
     }
@@ -45,6 +50,7 @@ public class Connection implements Closeable {
     }
 
     public void close() throws IOException{
+        isClosedIntentionally = true;
         socket.close();
         out.close();
         in.close();
