@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter;
 
 public class ServerGUI {
 
-    private static final Logger logger = Server.logger;
+    private static final Logger serverLogger = Server.serverLogger;
     private static JFrame menu = new JFrame();
     private static JFrame program = new JFrame();
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -45,7 +45,7 @@ public class ServerGUI {
             FileInputStream imageInput = new FileInputStream("utility/server_label.jpg");
             picture = new JLabel(new ImageIcon(ImageIO.read(imageInput)));
         } catch (IOException e) {
-            logger.error("Cannot find \"server_label.jpg\"");
+            serverLogger.error("Cannot find \"server_label.jpg\"");
         }
         if(picture != null) picture.setBounds(300,15, 270, 270);
 
@@ -106,6 +106,7 @@ public class ServerGUI {
             try {
                 Server.close();
             } catch (IOException exc){
+                serverLogger.error("An IO error occurred while attempting to close server socket");
             }
             startTime = LocalTime.MIN;
             timer.stop();

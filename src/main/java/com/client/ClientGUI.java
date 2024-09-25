@@ -1,6 +1,8 @@
 package com.client;
 
 import com.utility.Connection;
+import org.apache.logging.log4j.Logger;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -10,6 +12,7 @@ import java.io.IOException;
 
 public class ClientGUI {
 
+    private static final Logger clientLogger = Client.clientLogger;
     private static final JTextField textField = new JTextField();
     private static final JTextArea messages = new JTextArea();
     private static final JTextArea users = new JTextArea();
@@ -42,6 +45,7 @@ public class ClientGUI {
             FileInputStream imageInput = new FileInputStream("utility/client_label.png");
             picture = new JLabel(new ImageIcon(ImageIO.read(imageInput)));
         } catch (IOException e) {
+            clientLogger.error("Cannot find \"client_label.png\"");
         }
         if(picture != null) picture.setBounds(300,5, 512, 331);
 
@@ -126,6 +130,7 @@ public class ClientGUI {
                 if(Client.getConnection() != null)
                     Client.getConnection().close();
             } catch (IOException exc){
+                clientLogger.error("An IO error occurred while attempting to close socket");
             }
             Client.allUserNames.remove(Client.getUserName());
             Client.IP.setLength(0);

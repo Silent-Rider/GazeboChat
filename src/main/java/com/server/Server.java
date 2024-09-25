@@ -17,8 +17,8 @@ public class Server {
 
     private static volatile boolean isStoppedIntentionally = false;
     private static ServerSocket serverSocket;
+    static final Logger serverLogger = LogManager.getLogger(Server.class);
     static final Map<String, Connection> connectionMap = new ConcurrentHashMap<>();
-    static final Logger logger = LogManager.getLogger(Server.class);
     static final AtomicInteger port = new AtomicInteger();
     static final Object restartLock = new Object();
 
@@ -29,7 +29,7 @@ public class Server {
                 try{
                     restartLock.wait();
                 } catch (InterruptedException e){
-                    logger.error("Unknown interrupted exception before restarting a server");
+                    serverLogger.error("Unknown interrupted exception before restarting a server");
                 }
             }
     }
@@ -40,7 +40,7 @@ public class Server {
             try {
                 port.wait();
             } catch (InterruptedException e){
-                logger.error("Unknown interrupted exception before launching a server");
+                serverLogger.error("Unknown interrupted exception before launching a server");
             }
         }
         new Thread(() -> {
@@ -52,7 +52,7 @@ public class Server {
                 }
             } catch(IOException e){
                 if(isStoppedIntentionally) return;
-                logger.error("An IO error occurred while establishing connection with a client");
+                serverLogger.error("An IO error occurred while establishing connection with a client");
             }
         }).start();
     }
@@ -63,7 +63,7 @@ public class Server {
                 connectionMap.get(name).send(message);
             }
             catch (IOException e){
-                logger.error("An error occurred while sending message to remote address {}",
+                serverLogger.error("An error occurred while sending message to remote address {}",
                         connectionMap.get(name).getRemoteSocketAddress());
             }
         }
@@ -79,7 +79,7 @@ public class Server {
 
         @Override
         public void run(){
-            logger.info("A new connection has been established at {}", socket.getRemoteSocketAddress());
+            serverLogger.info("A new connection has been established at {}", socket.getRemoteSocketAddress());
             String userName = null;
             try(Connection connection = new Connection(socket)) {
                 userName = serverHandshake(connection);
@@ -87,7 +87,7 @@ public class Server {
                 notifyUserAboutOthers(connection, userName);
                 serverMainLoop(connection, userName);
             } catch (IOException | ClassNotFoundException e) {
-                logger.info("The connection with the remote address {} was closed", socket.getRemoteSocketAddress());
+                serverLogger.info("The connection with the remote address {} was closed", socket.getRemoteSocketAddress());
             }
             if(userName != null){
                 connectionMap.remove(userName);
@@ -125,7 +125,7 @@ public class Server {
                 if (message.getType() == MessageType.TEXT) {
                     message = new Message(MessageType.TEXT, String.format("%s: %s", userName, message.getText()));
                     sendBroadcastMessage(message);
-                } else logger.error("An error occurred. The type of the message isn't text.");
+                } else serverLogger.error("An error occurred. The type of the message isn't text.");
             }
         }
     }

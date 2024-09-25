@@ -3,6 +3,8 @@ package com.client;
 import com.utility.Connection;
 import com.utility.Message;
 import com.utility.MessageType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -14,6 +16,7 @@ class Client{
     private volatile static Connection connection;
     private static String newMessage;
     private static String userName;
+    static final Logger clientLogger = LogManager.getLogger(Client.class);
     static final StringBuffer IP = new StringBuffer();
     static final AtomicInteger port = new AtomicInteger();
     static final Set<String> allUserNames = new CopyOnWriteArraySet<>();
@@ -26,7 +29,7 @@ class Client{
                 try{
                     restartLock.wait();
                 } catch (InterruptedException e){
-//                    logger.error("Unknown interrupted exception before restarting a client");
+                    clientLogger.error("Unknown interrupted exception before restarting a client");
                 }
             }
     }
@@ -37,7 +40,7 @@ class Client{
             try {
                 port.wait();
             } catch (InterruptedException e){
-//                logger.error("Unknown interrupted exception before launching a client");
+                clientLogger.error("Unknown interrupted exception before launching a client");
             }
         }
         new SocketThread(IP.toString(), port.get()).start();
@@ -48,6 +51,7 @@ class Client{
             Message message = new Message(MessageType.TEXT, text);
             connection.send(message);
         } catch (IOException e) {
+            clientLogger.error("An error occurred while sending message to server");
         }
     }
 
@@ -88,11 +92,15 @@ class Client{
         public void run(){
             try {
                 Socket socket = new Socket(IP,port);
+                clientLogger.info("A new connection with server has been established");
                 connection = new Connection(socket);
                 clientHandshake();
                 clientMainLoop();
-            } catch (IOException | ClassNotFoundException e) {
+            }
+            catch (IOException | ClassNotFoundException | IllegalArgumentException e) {
+                clientLogger.info("The connection with server was closed");
                 if(connection != null && connection.isClosedIntentionally()) return;
+                if(e instanceof IllegalArgumentException) clientLogger.error("Cause of closure: {}", (e.getMessage()));
                 notifyConnectionStatusChanged(false);
             }
         }
@@ -126,7 +134,7 @@ class Client{
                     case NAME_ACCEPTED:
                         notifyConnectionStatusChanged(true);
                         return;
-                    default: throw new IOException("Unexpected message type");
+                    default: throw new IllegalArgumentException("Unexpected message type");
                 }
             }
         }
@@ -135,14 +143,14 @@ class Client{
             while(true){
                 Message message = connection.receive();
                 if(message.getType() == null){
-                    throw new IOException("Unexpected message type");
+                    throw new IllegalArgumentException("Unexpected message type");
                 }
                 switch(message.getType()){
                     case TEXT: processIncomingMessage(message.getText()); break;
                     case USER_ADDED: informAboutAddingNewUser(message.getText()); break;
                     case USER_REMOVED: informAboutDeletingNewUser(message.getText()); break;
                     default:
-                        throw new IOException("Unexpected message type");
+                        throw new IllegalArgumentException("Unexpected message type");
                 }
             }
         }
