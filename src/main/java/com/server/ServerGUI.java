@@ -19,20 +19,20 @@ public class ServerGUI {
     private static LocalTime startTime;
     private static final String USERS_COUNT = "Пользователей: %d";
 
-    private static final int X_INDENT = 200;
-    private static final int Y_INDENT = 100;
     private static final int WIDTH = 1100;
     private static final int HEIGHT = 700;
 
     static{
-        initFrame(menu);
-        initFrame(program);
+        initFrame(menu, WIDTH, HEIGHT);
+        initFrame(program, WIDTH-600, HEIGHT-400);
     }
 
-    private static void initFrame(JFrame frame){
+    private static void initFrame(JFrame frame, int width, int height){
         frame.setTitle("GazeboServer");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setBounds(X_INDENT, Y_INDENT, WIDTH, HEIGHT);
+        frame.setResizable(false);
+        frame.setSize(new Dimension(width, height));
+        frame.setLocationRelativeTo(null);
     }
 
     private static void adjustMenu(){
@@ -144,10 +144,8 @@ public class ServerGUI {
         menu.setVisible(false);
         menu.dispose();
         menu = new JFrame();
-        initFrame(menu);
+        initFrame(menu, WIDTH, HEIGHT);
         adjustProgram();
-        program.setBounds(500, 300, 500, 300);
-        program.setResizable(false);
         program.setVisible(true);
     }
 
@@ -160,9 +158,8 @@ public class ServerGUI {
         program.setVisible(false);
         program.dispose();
         program = new JFrame();
-        initFrame(program);
+        initFrame(program, WIDTH-600, HEIGHT-400);
         adjustMenu();
-        menu.setResizable(false);
         menu.setVisible(true);
     }
 

@@ -19,8 +19,6 @@ public class ClientGUI {
     private static JFrame menu = new JFrame();
     private static JFrame program = new JFrame();
 
-    private static final int X_INDENT = 200;
-    private static final int Y_INDENT = 100;
     private static final int WIDTH = 1100;
     private static final int HEIGHT = 700;
 
@@ -32,7 +30,9 @@ public class ClientGUI {
     private static void initFrame(JFrame frame){
         frame.setTitle("GazeboChat");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setBounds(X_INDENT, Y_INDENT, WIDTH, HEIGHT);
+        frame.setResizable(false);
+        frame.setSize(new Dimension(WIDTH, HEIGHT));
+        frame.setLocationRelativeTo(null);
     }
 
     private static void adjustMenu(){
@@ -86,16 +86,15 @@ public class ClientGUI {
         users.setEditable(false);
 
         users.setFont(new Font("Constantia", Font.BOLD, 30));
-        users.setBounds(1220, 40, 310, 705);
+        users.setBounds(820, 43, 260, 550);
         users.setBackground(new Color(255,216,176));
 
         messages.setFont(new Font("Times New Roman", Font.PLAIN, 25));
-        messages.setBounds(5, 5, 1200, 740);
         JScrollPane messagesScroll = new JScrollPane(messages);
-        messagesScroll.setBounds(5, 5, 1200, 740);
+        messagesScroll.setBounds(5, 10, 805, 585);
 
         textField.setFont(new Font("Times New Roman", Font.PLAIN, 25));
-        textField.setBounds(5, 760, 1010, 55);
+        textField.setBounds(5, 603, 625, 55);
         textField.setBorder(new LineBorder(Color.BLACK, 2));
         textField.addActionListener(e -> {
             Client.sendTextMessage(textField.getText());
@@ -104,14 +103,14 @@ public class ClientGUI {
 
         JLabel usersTitle = new JLabel("Участники чата");
         usersTitle.setFont(new Font("Segoe Print", Font.BOLD, 25));
-        usersTitle.setBounds(1270, 5, 250, 30);
+        usersTitle.setBounds(840, 5, 250, 30);
 
         JButton reset = getResetButton();
 
         JButton send = new JButton("Отправить");
         send.setFont(new Font("Segoe Print", Font.BOLD, 21));
         send.setBackground(new Color(145,255,34));
-        send.setBounds(1020, 760, 185, 55);
+        send.setBounds(640, 603, 170, 55);
         send.addActionListener(e -> {
             Client.sendTextMessage(textField.getText());
             textField.setText("");
@@ -122,9 +121,9 @@ public class ClientGUI {
 
     private static JButton getResetButton() {
         JButton reset = new JButton("Главное меню");
-        reset.setFont(new Font("Segoe Print", Font.BOLD, 25));
+        reset.setFont(new Font("Segoe Print", Font.BOLD, 23));
         reset.setBackground(new Color(255,83,83));
-        reset.setBounds(1270, 760, 220, 55);
+        reset.setBounds(845, 603, 215, 55);
         reset.addActionListener(e -> {
             try {
                 if(Client.getConnection() != null)
@@ -216,8 +215,6 @@ public class ClientGUI {
         menu = new JFrame();
         initFrame(menu);
         adjustProgram();
-        program.setExtendedState(Frame.MAXIMIZED_BOTH);
-        program.setResizable(false);
         program.setVisible(true);
     }
 
@@ -227,7 +224,6 @@ public class ClientGUI {
         program = new JFrame();
         initFrame(program);
         adjustMenu();
-        menu.setResizable(false);
         menu.setVisible(true);
     }
 }
