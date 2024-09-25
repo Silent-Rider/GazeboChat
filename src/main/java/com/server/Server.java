@@ -22,17 +22,17 @@ public class Server {
     static final AtomicInteger port = new AtomicInteger();
     static final Object restartLock = new Object();
 
-//    public static void main(String[] args) {
-//        while(true)
-//            synchronized (restartLock){
-//                launch();
-//                try{
-//                    restartLock.wait();
-//                } catch (InterruptedException e){
-//                    serverLogger.error("Unknown interrupted exception before restarting a server");
-//                }
-//            }
-//    }
+    public static void main(String[] args) {
+        while(true)
+            synchronized (restartLock){
+                launch();
+                try{
+                    restartLock.wait();
+                } catch (InterruptedException e){
+                    serverLogger.error("Unknown interrupted exception before restarting a server");
+                }
+            }
+    }
 
     private static void launch() {
         new Thread(ServerGUI::start).start();

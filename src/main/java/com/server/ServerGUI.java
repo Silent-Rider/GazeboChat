@@ -124,7 +124,7 @@ public class ServerGUI {
         launch.setFont(new Font("Tahoma", Font.BOLD, 30));
         launch.setBackground(new Color(0,219,219));
         launch.addActionListener(e -> {
-            if(!Connection.checkServerPort(portText.getText())) {
+            if(Connection.checkServerPort(portText.getText())) {
                 JOptionPane.showMessageDialog(null, "Введён некорректный порт сервера",
                         "Некорректный порт", JOptionPane.INFORMATION_MESSAGE);
                 return;

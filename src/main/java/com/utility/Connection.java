@@ -43,9 +43,9 @@ public class Connection implements Closeable {
     public static boolean checkServerPort(String portString) {
         try{
             int port = Integer.parseInt(portString);
-            return port >= 0 && port <= 65535;
+            return port < 0 || port > 65535;
         } catch (NumberFormatException e){
-            return false;
+            return true;
         }
     }
 

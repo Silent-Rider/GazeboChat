@@ -152,7 +152,7 @@ public class ClientGUI {
                 return;
             }
             String IP = IPText.getText();
-            if(!Connection.checkServerPort(portText.getText())) {
+            if(Connection.checkServerPort(portText.getText())) {
                 JOptionPane.showMessageDialog(null, "Введён некорректный порт сервера",
                         "Некорректный порт", JOptionPane.INFORMATION_MESSAGE);
                 return;
