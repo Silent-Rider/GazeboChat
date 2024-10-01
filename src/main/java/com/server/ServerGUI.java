@@ -42,7 +42,7 @@ public class ServerGUI {
 
         JLabel picture = null;
         try{
-            FileInputStream imageInput = new FileInputStream("utility/server_label.jpg");
+            FileInputStream imageInput = new FileInputStream("server_label.jpg");
             picture = new JLabel(new ImageIcon(ImageIO.read(imageInput)));
         } catch (IOException e) {
             serverLogger.error("Cannot find \"server_label.jpg\"");

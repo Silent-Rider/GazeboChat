@@ -42,7 +42,7 @@ public class ClientGUI {
 
         JLabel picture = null;
         try{
-            FileInputStream imageInput = new FileInputStream("utility/client_label.png");
+            FileInputStream imageInput = new FileInputStream("client_label.png");
             picture = new JLabel(new ImageIcon(ImageIO.read(imageInput)));
         } catch (IOException e) {
             clientLogger.error("Cannot find \"client_label.png\"");
